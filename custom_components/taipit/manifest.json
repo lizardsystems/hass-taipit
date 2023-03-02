@@ -3,7 +3,8 @@
   "name": "Taipit Cloud Meters",
   "version": "1.0.0",
   "config_flow": true,
-  "documentation": "https://github.com/lizardsystems/taipit",
+  "documentation": "https://github.com/lizardsystems/hacs-taipit",
+  "issue_tracker": "https://github.com/lizardsystems/hacs-taipit/issues",
   "requirements": [
     "aiotaipit==2.1.0"
   ],
