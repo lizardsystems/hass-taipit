@@ -1,7 +1,7 @@
 {
     "name": "Signal Strength",
     "state": {
-        "signal": {
+        "taipit__signal": {
               "offline": "Offline",
               "bad": "Bad",
               "good": "Good",

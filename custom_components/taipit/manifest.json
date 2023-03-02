@@ -1,20 +1,17 @@
 {
-  "domain": "taipit",
-  "name": "Taipit Cloud Meters",
-  "version": "1.0.0",
-  "config_flow": true,
-  "documentation": "https://github.com/lizardsystems/hacs-taipit",
-  "issue_tracker": "https://github.com/lizardsystems/hacs-taipit/issues",
-  "requirements": [
-    "aiotaipit==2.1.0"
-  ],
-  "loggers": ["aiotaipit","taipit"],
-  "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
-  "dependencies": [],
-  "codeowners": [
-    "@lizardsystems"
-  ],
-  "iot_class": "cloud_polling"
+    "domain": "taipit",
+    "name": "Taipit Cloud Meters",
+    "codeowners": ["@lizardsystems"],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/lizardsystems/hacs-taipit",
+    "homekit": {},
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/lizardsystems/hacs-taipit/issues",
+    "loggers": ["aiotaipit", "taipit"],
+    "requirements": ["aiotaipit==2.1.0"],
+    "ssdp": [],
+    "version": "1.0.0",
+    "zeroconf": []
 }
+

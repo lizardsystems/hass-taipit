@@ -24,7 +24,6 @@
     "entity": {
         "sensor": {
           "signal": {
-            "name": "Signal Strength",
             "state": {
               "offline": "Offline",
               "bad": "Bad",
