@@ -1,0 +1,19 @@
+{
+  "domain": "taipit",
+  "name": "Taipit Cloud Meters",
+  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/lizardsystems/taipit",
+  "requirements": [
+    "aiotaipit==2.1.0"
+  ],
+  "loggers": ["aiotaipit","taipit"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@lizardsystems"
+  ],
+  "iot_class": "cloud_polling"
+}

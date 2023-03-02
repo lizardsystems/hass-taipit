@@ -1,0 +1,11 @@
+{
+    "name": "Signal Strength",
+    "state": {
+        "signal": {
+              "offline": "Offline",
+              "bad": "Bad",
+              "good": "Good",
+              "very_good": "Very Good"
+        }
+    }
+}
