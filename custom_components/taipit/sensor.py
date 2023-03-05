@@ -25,10 +25,11 @@ from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from homeassistant.helpers.typing import StateType
 
+from aiotaipit.helpers import get_model_name
+
 from .const import (
     ATTRIBUTION,
     DOMAIN,
-    MANUFACTURER,
     CONF_NAME,
     CONFIGURATION_URL,
     STATE_OFFLINE,
@@ -130,18 +131,16 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
             data["economizer"]["lastReading"]["ts_tz"],
             data["economizer"]["timezone"],
         ),
-        translation_key="current_timestamp",
         entity_category=EntityCategory.DIAGNOSTIC,
-        # entity_registry_enabled_default=False,
+        translation_key="current_timestamp",
     ),
     TaipitSensorEntityDescription(
         key="serial_number",
         name="Serial Number",
         icon="mdi:identifier",
         value_fn=lambda data: data["meter"]["serialNumber"],
-        translation_key="serial_number",
         entity_category=EntityCategory.DIAGNOSTIC,
-        # entity_registry_enabled_default=False,
+        translation_key="serial_number",
     ),
     TaipitSensorEntityDescription(
         key="mac_address",
@@ -149,7 +148,6 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         icon="mdi:network",
         value_fn=lambda data: format_mac(data["controller"]["id"]),
         entity_category=EntityCategory.DIAGNOSTIC,
-        # entity_registry_enabled_default=False,
         translation_key="mac_address",
     ),
     TaipitSensorEntityDescription(
@@ -160,8 +158,8 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         ],
         options=[STATE_OFFLINE, STATE_BAD, STATE_GOOD, STATE_VERY_GOOD],
         device_class=SensorDeviceClass.ENUM,
-        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda data: signal_text((1, 12, 17), data["controller"]["signal"]),
+        entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="signal",
     ),
 )
@@ -186,15 +184,15 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
 
         self.meter_id = meter_id
         meter_name = coordinator.data[meter_id]["meter"].get(CONF_NAME)
-        meter_model = (
-            (meter_name.rsplit(maxsplit=1) or [None])[0] if meter_name else None
+        meter_manufacturer, meter_model = get_model_name(
+            coordinator.data[meter_id]["extended"]["meterTypeId"]
         )
 
         self.entity_description = entity_description
         self._attr_unique_id = f"{self.meter_id}-{self.entity_description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, str(meter_id))},
-            manufacturer=MANUFACTURER,
+            manufacturer=meter_manufacturer,
             model=meter_model,
             name=meter_name,
             configuration_url=CONFIGURATION_URL.format(meter_id=self.meter_id),

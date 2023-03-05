@@ -9,7 +9,6 @@ DOMAIN: Final = "taipit"
 UPDATE_INTERVAL: Final[timedelta] = timedelta(minutes=5)
 
 ATTRIBUTION: Final = "Data provided by Taipit Cloud"
-MANUFACTURER: Final = "Taipit"
 CONF_METERS: Final = "meters"
 CONF_NAME: Final = "name"
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -51,40 +51,56 @@ class TaipitCoordinator(DataUpdateCoordinator):
         try:
             LOGGER.debug("Start updating Taipit data")
             _data: dict[int, dict] = self.data
+            first_update: bool = False
             if _data is None:
                 LOGGER.debug("Retrieving meters for account")
+                # fetch list of meters in account
                 all_meters: list[dict[str, Any]] = await self._api.async_get_meters()
-                _data = {meter[CONF_ID]: {"info": meter} for meter in all_meters}
+                _data = {int(meter[CONF_ID]): {"info": meter} for meter in all_meters}
                 if _data:
                     LOGGER.debug("%d meters retrieved for account", len(all_meters))
                 else:
                     LOGGER.warning("No meters retrieved for account")
                     return
+                # fetch extended meter info including model name
+                for meter_id in _data:
+                    meter_info = await self._api.async_get_meter_info(meter_id)
+                    _data[meter_id].update({"extended": meter_info})
 
+                # it is first update
+                first_update = True
+
+            # fetch the latest readings
             for meter_id in _data:
-                last_update_time = _data[meter_id].get("last_update_time")
-                if last_update_time:
-                    delta_time = datetime.now(timezone.utc) - last_update_time
-                    if delta_time < MIN_TIME_BETWEEN_UPDATES:
-                        # проверяем время получения в последних данных и если меньше получаса то не пытаться получать
-                        # декоратор Throttle здесь не подойдет т.к. нужно не от последнего вызова а от последней передачи показаний
-                        LOGGER.debug(
-                            "Skipped updating information for meter SERIAL=%s. Time: %s",
-                            _data[meter_id]["meter"]["serialNumber"],
-                            delta_time,
+                # Check when the latest data was received
+                if not first_update:
+                    last_update_time = _data[meter_id].get("last_update_time")
+                    if last_update_time:
+                        delta_time = timedelta(
+                            minutes=(
+                                datetime.now(timezone.utc) - last_update_time
+                            ).total_seconds()
+                            / 60
                         )
-
-                        continue
+                        # skip update if time between update is less than 30 min
+                        if delta_time < MIN_TIME_BETWEEN_UPDATES:
+                            LOGGER.debug(
+                                "Skipped updating information for meter SERIAL=%s. Time: %s",
+                                _data[meter_id]["meter"]["serialNumber"],
+                                delta_time,
+                            )
+                            continue
 
                 readings = await self._api.async_get_meter_readings(meter_id)
-
-                last_update_time = from_timestamp_tz(
-                    readings["economizer"]["lastReading"]["ts_tz"],
-                    readings["economizer"]["timezone"],
-                )
-
-                _data[meter_id]["last_update_time"] = last_update_time
                 _data[meter_id].update(readings)
+
+                if not first_update:
+                    last_update_time = from_timestamp_tz(
+                        readings["economizer"]["lastReading"]["ts_tz"],
+                        readings["economizer"]["timezone"],
+                    )
+                    _data[meter_id]["last_update_time"] = last_update_time
+
                 LOGGER.debug(
                     "Updated information for meter SERIAL=%s",
                     _data[meter_id]["meter"]["serialNumber"],
