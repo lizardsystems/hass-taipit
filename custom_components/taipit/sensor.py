@@ -71,7 +71,7 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Active Energy",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_a"]),
         translation_key="energy_a",
     ),
@@ -80,7 +80,7 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Active Energy T1",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t1_a"]),
         translation_key="energy_t1_a",
     ),
@@ -89,7 +89,7 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Active Energy T2",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t2_a"]),
         translation_key="energy_t2_a",
     ),
@@ -98,7 +98,7 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Active Energy T3",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t3_a"]),
         translation_key="energy_t3_a",
     ),
@@ -181,15 +181,24 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
     ) -> None:
         """Initialize the Sensor."""
         super().__init__(coordinator)
-
+        self.entity_description = entity_description
         self.meter_id = meter_id
+
         meter_name = coordinator.data[meter_id]["meter"].get(CONF_NAME)
         meter_manufacturer, meter_model = get_model_name(
             coordinator.data[meter_id]["extended"]["meterTypeId"]
         )
+        meter_serial: str = coordinator.data[meter_id]["meter"]["serialNumber"]
 
-        self.entity_description = entity_description
-        self._attr_unique_id = f"{self.meter_id}-{self.entity_description.key}"
+        self._attr_unique_id = "_".join(
+            [
+                DOMAIN,
+                str(meter_serial),
+                meter_model,
+                self.entity_description.key,
+            ]
+        ).lower()
+
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, str(meter_id))},
             manufacturer=meter_manufacturer,

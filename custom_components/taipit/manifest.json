@@ -1,6 +1,6 @@
 {
     "domain": "taipit",
-    "name": "Taipit Cloud Meters",
+    "name": "Taipit",
     "codeowners": ["@lizardsystems"],
     "config_flow": true,
     "dependencies": [],
