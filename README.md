@@ -10,7 +10,7 @@
 
 **Способ 1.** [HACS](https://hacs.xyz/) > Интеграции > Добавить > **Taipit** > Установить
 
-**Способ 2.** Вручную скопируйте папку `taipit` из [latest release](https://github.com/lizardsystems/hacs-taipit/releases/latest) в директорию `/config/custom_components`.
+**Способ 2.** Вручную скопируйте папку `taipit` из [latest release](https://github.com/lizardsystems/hass-taipit/releases/latest) в директорию `/config/custom_components`.
 
 # Настройка
 
@@ -81,7 +81,7 @@ logger:
     aiotaipit: debug
 
 ```
-После возникновения проблемы, пожалуйста, найдите проблему в журнале (/config/home-assistant.log) и создайте [запрос на исправление](https://github.com/lizardsystems/hacs-taipit/issues).
+После возникновения проблемы, пожалуйста, найдите проблему в журнале (/config/home-assistant.log) и создайте [запрос на исправление](https://github.com/lizardsystems/hass-taipit/issues).
 
 # Дополнительная информация
 
