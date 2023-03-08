@@ -1,36 +1,36 @@
 {
-    "title": "Taipit",
-    "config": {
-        "abort": {
-            "already_configured": "Account is already configured",
-			"reauth_successful": "Re-authentication was successful"
-        },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error",
-			"no_devices": "No devices found in account"
-        },
-        "step": {
-            "user": {
-				"title": "Fill in your Taipit login information",
-                "data": {
-                    "password": "Password",
-                    "username": "Username"
-                }
-            }
-        }
+  "title": "Taipit",
+  "config": {
+    "abort": {
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
     },
-    "entity": {
-        "sensor": {
-          "signal": {
-            "state": {
-              "offline": "Offline",
-              "bad": "Bad",
-              "good": "Good",
-              "very_good": "Very Good"
-            }
-          }
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error",
+      "no_devices": "No devices found in account"
+    },
+    "step": {
+      "user": {
+        "title": "Fill in your Taipit login information",
+        "data": {
+          "password": "Password",
+          "username": "Username"
         }
+      }
     }
+  },
+  "entity": {
+    "sensor": {
+      "signal": {
+        "state": {
+          "offline": "Offline",
+          "bad": "Bad",
+          "good": "Good",
+          "very_good": "Very Good"
+        }
+      }
+    }
+  }
 }
