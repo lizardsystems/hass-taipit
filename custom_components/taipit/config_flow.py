@@ -23,7 +23,6 @@ from aiotaipit.exceptions import TaipitAuthError
 
 from .const import DOMAIN, CONF_METERS
 
-
 _LOGGER = logging.getLogger(__name__)
 
 

@@ -24,6 +24,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import slugify
 
 from aiotaipit.helpers import get_model_name
 
@@ -37,6 +38,7 @@ from .const import (
     STATE_GOOD,
     STATE_VERY_GOOD,
     SIGNAL_ICONS,
+    LOGGER,
 )
 from .coordinator import TaipitCoordinator
 from .helpers import from_timestamp_tz, format_mac, signal_text
@@ -190,14 +192,16 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
         )
         meter_serial: str = coordinator.data[meter_id]["meter"]["serialNumber"]
 
-        self._attr_unique_id = "_".join(
-            [
-                DOMAIN,
-                str(meter_serial),
-                meter_model,
-                self.entity_description.key,
-            ]
-        ).lower()
+        self._attr_unique_id = slugify(
+            "_".join(
+                [
+                    meter_manufacturer,
+                    meter_model,
+                    str(meter_serial),
+                    self.entity_description.key,
+                ]
+            )
+        )
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, str(meter_id))},
@@ -232,6 +236,8 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
             self._attr_icon = self.entity_description.icon_fn(
                 self.coordinator.data[self.meter_id]
             )
+
+        LOGGER.debug("Entity ID: %s Value: %s", self.unique_id, self.native_value)
 
         self.async_write_ha_state()
 
