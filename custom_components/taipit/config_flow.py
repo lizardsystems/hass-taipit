@@ -1,30 +1,28 @@
 """Config flow for taipit integration."""
 from __future__ import annotations
 
-import logging
-from typing import Any
-from collections.abc import Mapping
-import voluptuous as vol
-from async_timeout import timeout
-import aiohttp
 import asyncio
+import logging
+from collections.abc import Mapping
+from typing import Any
 
-from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.config_entries import ConfigEntry
-
+import aiohttp
+import voluptuous as vol
 from aiotaipit import TaipitApi, SimpleTaipitAuth
 from aiotaipit.const import GUEST_USERNAME, GUEST_PASSWORD
 from aiotaipit.exceptions import TaipitAuthError
+from async_timeout import timeout
+from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, CONF_METERS
 
 _LOGGER = logging.getLogger(__name__)
-
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -70,29 +68,30 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     reauth_entry: ConfigEntry | None = None
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+            self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
-        if user_input is None:
-            return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
-            )
+        if user_input is not None:
+            await self.async_set_unique_id(f"{user_input[CONF_USERNAME].lower()}")
+            self._abort_if_unique_id_configured()
+            try:
+                info = await validate_input(self.hass, user_input)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                return self.async_create_entry(title=info["title"], data=user_input)
 
-        await self.async_set_unique_id(f"{user_input[CONF_USERNAME].lower()}")
-        self._abort_if_unique_id_configured()
-
-        try:
-            info = await validate_input(self.hass, user_input)
-        except CannotConnect:
-            errors["base"] = "cannot_connect"
-        except InvalidAuth:
-            errors["base"] = "invalid_auth"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
-            errors["base"] = "unknown"
-        else:
-            return self.async_create_entry(title=info["title"], data=user_input)
+        return self.async_show_form(
+            step_id="user",
+            data_schema=STEP_USER_DATA_SCHEMA,
+            errors=errors
+        )
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
         """Handle reauthorization request from Taipit."""
@@ -103,7 +102,7 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
+            self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Confirm re-authentication with Aladdin Connect."""
         errors: dict[str, str] = {}
