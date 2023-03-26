@@ -8,7 +8,7 @@
 
 # Установка
 
-**Способ 1.** [HACS](https://hacs.xyz/) > Интеграции > Добавить > **Taipit** > Установить
+**Способ 1.** Через [HACS](https://hacs.xyz/) > Интеграции > Добавить пользовательский репозиторий > https://github.com/lizardsystems/hass-taipit/ > **Taipit** > Установить
 
 **Способ 2.** Вручную скопируйте папку `taipit` из [latest release](https://github.com/lizardsystems/hass-taipit/releases/latest) в директорию `/config/custom_components`.
 
