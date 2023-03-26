@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import Any
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
+from aiotaipit.helpers import get_model_name
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
@@ -19,14 +20,12 @@ from homeassistant.const import (
     UnitOfElectricPotential,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
-
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import slugify
-
-from aiotaipit.helpers import get_model_name
+from homeassistant.util.dt import as_local
 
 from .const import (
     ATTRIBUTION,
@@ -38,10 +37,9 @@ from .const import (
     STATE_GOOD,
     STATE_VERY_GOOD,
     SIGNAL_ICONS,
-    LOGGER,
 )
 from .coordinator import TaipitCoordinator
-from .helpers import from_timestamp_tz, format_mac, signal_text
+from .helpers import utc_from_timestamp_tz, format_mac, signal_text
 
 
 @dataclass
@@ -55,9 +53,9 @@ class TaipitEntityDescriptionMixin:
 class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     """Describes Taipit sensor entity default overrides."""
 
-    attr_fn: Callable[[dict[str, Any]], Mapping[str, Any] | None] = lambda data: None
+    attr_fn: Callable[[dict[str, Any]], dict[str, Any] | None] = lambda data: None
     avabl_fn: Callable[[dict[str, Any]], bool] = lambda data: True
-    icon_fn: Callable[[StateType], str] | None = None
+    icon_fn: Callable[[dict[str, Any]], str] | None = None
 
 
 @dataclass
@@ -129,10 +127,10 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Last Data Update",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:clock",
-        value_fn=lambda data: from_timestamp_tz(
+        value_fn=lambda data: as_local(utc_from_timestamp_tz(
             data["economizer"]["lastReading"]["ts_tz"],
             data["economizer"]["timezone"],
-        ),
+        )),
         entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="current_timestamp",
     ),
@@ -176,10 +174,10 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
     meter_id: int | None = None
 
     def __init__(
-        self,
-        coordinator: TaipitCoordinator,
-        entity_description: TaipitSensorEntityDescription,
-        meter_id: int,
+            self,
+            coordinator: TaipitCoordinator,
+            entity_description: TaipitSensorEntityDescription,
+            meter_id: int,
     ) -> None:
         """Initialize the Sensor."""
         super().__init__(coordinator)
@@ -215,10 +213,10 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         return (
-            super().available
-            and self.coordinator.data is not None
-            and self.coordinator.data.get(self.meter_id) is not None
-            and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
+                super().available
+                and self.coordinator.data is not None
+                and self.coordinator.data.get(self.meter_id) is not None
+                and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
         )
 
     @callback
@@ -237,15 +235,17 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
                 self.coordinator.data[self.meter_id]
             )
 
-        LOGGER.debug("Entity ID: %s Value: %s", self.unique_id, self.native_value)
+        self.coordinator.logger.debug(
+            "Entity ID: %s Value: %s", self.unique_id, self.native_value
+        )
 
         self.async_write_ha_state()
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 

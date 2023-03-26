@@ -2,23 +2,19 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
 from bisect import bisect
 from collections.abc import Sequence
+from datetime import datetime, timedelta
+
 from homeassistant.helpers.typing import StateType
+from homeassistant.util.dt import utc_from_timestamp, as_local
+
 from .const import STATE_OFFLINE, STATE_BAD, STATE_GOOD, STATE_VERY_GOOD
 
 
-def from_timestamp_tz(timestamp: int, hours: int) -> datetime:
+def utc_from_timestamp_tz(timestamp: int, hours: int) -> datetime:
     """Convert  seconds from 1970 with timezone info"""
-    return datetime(
-        1970,
-        1,
-        1,
-        tzinfo=timezone(
-            timedelta(hours=hours),
-        ),
-    ) + timedelta(seconds=timestamp)
+    return utc_from_timestamp(timestamp) - timedelta(hours=hours)
 
 
 def format_mac(value: str) -> str:

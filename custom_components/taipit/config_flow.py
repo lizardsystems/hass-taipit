@@ -20,7 +20,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_METERS
+from .const import DOMAIN, CONF_METERS, DEFAULT_API_TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         )
         api = TaipitApi(auth)
 
-        async with timeout(10):
+        async with timeout(DEFAULT_API_TIMEOUT):
             info = await api.async_get_meters()
 
         meters = {meter[CONF_ID]: meter for meter in info}
