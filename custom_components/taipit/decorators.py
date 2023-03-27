@@ -20,13 +20,13 @@ _ReturnFuncType = Callable[
 
 
 def api_request_handler(
-    func: _FuncType[_TaipitCoordinatorT, _P, _R]
+        func: _FuncType[_TaipitCoordinatorT, _P, _R]
 ) -> _ReturnFuncType[_TaipitCoordinatorT, _P, _R]:
     """Decorator to handle API errors."""
 
     @wraps(func)
     async def wrapper(
-        self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
+            self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
     ) -> _R:
         """Wrap an API method."""
         try:

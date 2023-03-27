@@ -1,7 +1,6 @@
 """Taipit Cloud Coordinator."""
 from __future__ import annotations
 
-import datetime as dt
 from logging import getLogger
 from typing import Any
 
@@ -16,12 +15,19 @@ from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.json import json_dumps
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.util.dt import now, as_local
+from homeassistant.util.dt import now
 
-from .const import DOMAIN, UPDATE_INTERVAL, MIN_TIME_BETWEEN_UPDATES
+from .const import (
+    DOMAIN,
+    UPDATE_INTERVAL,
+    CONF_INFO,
+    CONF_SERIAL_NUMBER,
+    CONF_NEXT_UPDATE_TIME
+)
 from .decorators import api_request_handler
-from .helpers import utc_from_timestamp_tz
+from .helpers import get_next_update_time
 
 
 class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
@@ -29,17 +35,21 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
 
     _api: TaipitApi
     force_next_update: bool
+    username: str
+    password: str
 
     def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
+            self,
+            hass: HomeAssistant,
+            entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         self.force_next_update = False
         session = async_get_clientsession(hass)
+        self.username = entry.data[CONF_USERNAME]
+        self.password = entry.data[CONF_PASSWORD]
         auth = SimpleTaipitAuth(
-            entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], session
+            self.username, self.password, session
         )
         self._api = TaipitApi(auth)
 
@@ -50,6 +60,11 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             update_interval=UPDATE_INTERVAL,
         )
 
+    async def async_force_refresh(self):
+        """Force refresh data."""
+        self.force_next_update = True
+        await self.async_refresh()
+
     async def _async_update_data(self) -> dict[int, Any] | None:
         """Fetch data from Taipit."""
         try:
@@ -57,48 +72,52 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             _data: dict[int, dict] = self.data
 
             if _data is None or self.force_next_update:
-                self.logger.debug("Retrieving meters for account")
                 # fetch list of meters in account
+                self.logger.debug("Retrieving meters for user %s", self.username)
                 _data = await self._async_get_meters()
                 if _data:
-                    self.logger.debug("%d meters retrieved for account", len(_data))
+                    self.logger.debug("%d meters retrieved for user %s", len(_data), self.username)
+                    self.logger.debug(json_dumps(_data))
                 else:
-                    self.logger.warning("No meters retrieved for account")
+                    self.logger.warning("No meters retrieved for user %s", self.username)
                     return None
+
                 # fetch extended meter info including model name
                 for meter_id in _data:
                     meter_info = await self._async_get_meter_info(meter_id)
-                    _data[meter_id].update({"extended": meter_info})
-                    self.logger.debug(
-                        "Retrieved information for meter ID %s", str(meter_id)
-                    )
+                    _data[meter_id]["extended"] = meter_info
+                    self.logger.debug("Retrieved information for meter %s", _data[meter_id][CONF_INFO][
+                        CONF_SERIAL_NUMBER])
+                    self.logger.debug(json_dumps(meter_info))
 
             # fetch the latest readings
             for meter_id in _data:
                 # Check when the latest data was received
                 # skip update if time between update is less than 30 min
+                serial_number = _data[meter_id][CONF_INFO][CONF_SERIAL_NUMBER]
                 if not self.force_next_update:
-                    _update_time = _data[meter_id].get("next_update_time")
+                    _update_time = _data[meter_id].get(CONF_NEXT_UPDATE_TIME)
                     if _update_time:
-                        delta_time = (_update_time - now()).total_seconds() / 60
+                        delta_time = int((_update_time - now()).total_seconds()) // 60
+                        self.logger.debug("Time to update: %d minutes", delta_time)
                         if delta_time > 0:
-                            self.logger.debug(
-                                "Skipped updating information for meter SERIAL=%s. Time: %s ",
-                                _data[meter_id]["meter"]["serialNumber"],
-                                delta_time,
-                            )
+                            self.logger.debug("Skipped updating information for meter %s.", serial_number)
                             continue
+                else:
+                    self.logger.debug("Force updating information form API")
 
+                self.logger.debug("Retrieving readings for meter %s...", serial_number)
                 readings = await self._async_get_meter_readings(meter_id)
                 _data[meter_id].update(readings)
-                _data[meter_id]["next_update_time"] = self.get_next_update_time(
-                    readings
-                )
+                self.logger.debug("Retrieved readings for meter %s.", serial_number)
+                self.logger.debug(json_dumps(readings))
+
+                _data[meter_id][CONF_NEXT_UPDATE_TIME] = get_next_update_time(readings)
 
                 self.logger.debug(
                     "Updated information for meter SERIAL=%s. Next update time: %s",
-                    _data[meter_id]["meter"]["serialNumber"],
-                    _data[meter_id]["next_update_time"],
+                    serial_number,
+                    _data[meter_id][CONF_NEXT_UPDATE_TIME],
                 )
             return _data
 
@@ -111,28 +130,18 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
         finally:
             self.force_next_update = False
 
-    @staticmethod
-    def get_next_update_time(readings: dict[str, Any]) -> dt.datetime:
-        """Get next update time for meter."""
-        _update_time = as_local(
-            utc_from_timestamp_tz(
-                readings["economizer"]["lastReading"]["ts_tz"],
-                readings["economizer"]["timezone"],
-            )
-        )
-        _next_update_time = _update_time + MIN_TIME_BETWEEN_UPDATES
-
-        return _next_update_time
-
     @api_request_handler
     async def _async_get_meters(self) -> dict[int, dict[str, Any]]:
+        """Get all meters and short info from API."""
         all_meters: list[dict[str, Any]] = await self._api.async_get_meters()
-        return {int(meter[CONF_ID]): {"info": meter} for meter in all_meters}
+        return {int(meter[CONF_ID]): {CONF_INFO: meter} for meter in all_meters}
 
     @api_request_handler
     async def _async_get_meter_info(self, meter_id: int) -> dict[str, Any]:
+        """Get meter info from API."""
         return await self._api.async_get_meter_info(meter_id)
 
     @api_request_handler
     async def _async_get_meter_readings(self, meter_id: int) -> dict[str, Any]:
+        """Get meter readings from API."""
         return await self._api.async_get_meter_readings(meter_id)

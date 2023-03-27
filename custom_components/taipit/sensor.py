@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from aiotaipit.helpers import get_model_name
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
@@ -20,18 +19,13 @@ from homeassistant.const import (
     UnitOfElectricPotential,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo, EntityCategory
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import slugify
 from homeassistant.util.dt import as_local
 
 from .const import (
-    ATTRIBUTION,
     DOMAIN,
-    CONF_NAME,
-    CONFIGURATION_URL,
     STATE_OFFLINE,
     STATE_BAD,
     STATE_GOOD,
@@ -39,6 +33,7 @@ from .const import (
     SIGNAL_ICONS,
 )
 from .coordinator import TaipitCoordinator
+from .entity import TaipitBaseCoordinatorEntity
 from .helpers import utc_from_timestamp_tz, format_mac, signal_text
 
 
@@ -127,10 +122,12 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         name="Last Data Update",
         device_class=SensorDeviceClass.TIMESTAMP,
         icon="mdi:clock",
-        value_fn=lambda data: as_local(utc_from_timestamp_tz(
-            data["economizer"]["lastReading"]["ts_tz"],
-            data["economizer"]["timezone"],
-        )),
+        value_fn=lambda data: as_local(
+            utc_from_timestamp_tz(
+                data["economizer"]["lastReading"]["ts_tz"],
+                data["economizer"]["timezone"],
+            )
+        ),
         entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="current_timestamp",
     ),
@@ -165,13 +162,9 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
 )
 
 
-class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
+class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
     """Taipit Sensor."""
-
-    _attr_attribution = ATTRIBUTION
-    _attr_has_entity_name = True
     entity_description: TaipitSensorEntityDescription
-    meter_id: int | None = None
 
     def __init__(
             self,
@@ -180,34 +173,7 @@ class TaipitSensor(CoordinatorEntity[TaipitCoordinator], SensorEntity):
             meter_id: int,
     ) -> None:
         """Initialize the Sensor."""
-        super().__init__(coordinator)
-        self.entity_description = entity_description
-        self.meter_id = meter_id
-
-        meter_name = coordinator.data[meter_id]["meter"].get(CONF_NAME)
-        meter_manufacturer, meter_model = get_model_name(
-            coordinator.data[meter_id]["extended"]["meterTypeId"]
-        )
-        meter_serial: str = coordinator.data[meter_id]["meter"]["serialNumber"]
-
-        self._attr_unique_id = slugify(
-            "_".join(
-                [
-                    meter_manufacturer,
-                    meter_model,
-                    str(meter_serial),
-                    self.entity_description.key,
-                ]
-            )
-        )
-
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, str(meter_id))},
-            manufacturer=meter_manufacturer,
-            model=meter_model,
-            name=meter_name,
-            configuration_url=CONFIGURATION_URL.format(meter_id=self.meter_id),
-        )
+        super().__init__(coordinator, entity_description, meter_id)
 
     @property
     def available(self) -> bool:

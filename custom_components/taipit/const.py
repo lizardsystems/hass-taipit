@@ -1,4 +1,5 @@
 """Constants for the taipit integration."""
+from __future__ import annotations
 
 from datetime import timedelta
 from typing import Final
@@ -11,17 +12,20 @@ UPDATE_INTERVAL: Final[timedelta] = timedelta(minutes=5)
 ATTRIBUTION: Final = "Data provided by Taipit Cloud"
 CONF_METERS: Final = "meters"
 CONF_NAME: Final = "name"
+CONF_INFO: Final = "info"
+CONF_SERIAL_NUMBER: Final = "serialNumber"
+CONF_NEXT_UPDATE_TIME: Final = "next_update_time"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
 
 CONFIGURATION_URL: Final = "https://cloud.meters.taipit.ru/?meter={meter_id}"
 
-STATE_OFFLINE = "offline"
-STATE_BAD = "bad"
-STATE_GOOD = "good"
-STATE_VERY_GOOD = "very_good"
+STATE_OFFLINE: Final = "offline"
+STATE_BAD: Final = "bad"
+STATE_GOOD: Final = "good"
+STATE_VERY_GOOD: Final = "very_good"
 
 SIGNAL_ICONS = {
     STATE_OFFLINE: "mdi:signal-cellular-outline",
