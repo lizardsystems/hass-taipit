@@ -22,7 +22,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import DOMAIN, CONF_INFO, CONF_SERIAL_NUMBER
 from .const import REQUEST_REFRESH_DEFAULT_COOLDOWN
 from .decorators import async_api_request_handler
-from .helpers import get_interval_to
+from .helpers import utc_from_timestamp_tz, get_interval_to
 
 
 class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
@@ -34,10 +34,10 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
     password: str
 
     def __init__(
-            self,
-            hass: HomeAssistant,
-            logger: logging.Logger,
-            config_entry: ConfigEntry,
+        self,
+        hass: HomeAssistant,
+        logger: logging.Logger,
+        config_entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         self.force_next_update = False
@@ -47,16 +47,17 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
         auth = SimpleTaipitAuth(self.username, self.password, session)
         self._api = TaipitApi(auth)
 
-        self.data = {}
-
-        super().__init__(hass, logger, name=DOMAIN,
-                         request_refresh_debouncer=Debouncer(
-                             hass,
-                             logger,
-                             cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
-                             immediate=False,
-                         ),
-                         )
+        super().__init__(
+            hass,
+            logger,
+            name=DOMAIN,
+            request_refresh_debouncer=Debouncer(
+                hass,
+                logger,
+                cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
+                immediate=False,
+            ),
+        )
 
     async def async_force_refresh(self):
         """Force refresh data."""
@@ -65,10 +66,9 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
 
     async def _async_update_data(self) -> dict[int, Any] | None:
         """Fetch data from Taipit."""
+        _data: dict[int, dict] = self.data
         try:
             self.logger.debug("Start updating Taipit data")
-            _data: dict[int, dict] = self.data
-
             if _data is None or self.force_next_update:
                 # fetch list of meters in account
                 self.logger.debug("Retrieving meters for user %s", self.username)
@@ -99,7 +99,10 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
                 readings = await self._async_get_meter_readings(meter_id)
                 _data[meter_id].update(readings)
                 self.logger.debug("Retrieved readings for meter %s.", serial_number)
-
+                _data[meter_id]["last_update_time"] = utc_from_timestamp_tz(
+                    readings["economizer"]["lastReading"]["ts_tz"],
+                    readings["economizer"]["timezone"],
+                )
             return _data
 
         except TaipitAuthInvalidGrant as exc:
@@ -110,7 +113,9 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             raise ConfigEntryNotReady("Can not connect to host") from exc
         finally:
             self.force_next_update = False
-            self.update_interval = get_interval_to([randrange(60)], [1, 31], list(range(24)))
+            self.update_interval = get_interval_to(
+                [randrange(60)], [randrange(2, 5), randrange(32, 35)], list(range(24))
+            )
             self.logger.debug(
                 "Update interval: %s seconds", self.update_interval.total_seconds()
             )
