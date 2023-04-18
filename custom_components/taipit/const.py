@@ -9,12 +9,12 @@ from homeassistant.const import Platform
 DOMAIN: Final = "taipit"
 UPDATE_INTERVAL: Final[timedelta] = timedelta(minutes=5)
 
+
 ATTRIBUTION: Final = "Data provided by Taipit Cloud"
 CONF_METERS: Final = "meters"
 CONF_NAME: Final = "name"
 CONF_INFO: Final = "info"
 CONF_SERIAL_NUMBER: Final = "serialNumber"
-CONF_NEXT_UPDATE_TIME: Final = "next_update_time"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=30)
 
@@ -34,4 +34,6 @@ SIGNAL_ICONS = {
     STATE_VERY_GOOD: "mdi:signal-cellular-3",
 }
 
-DEFAULT_API_TIMEOUT: Final = 20
+API_TIMEOUT: Final = 30
+API_MAX_TRIES: Final = 3
+API_RETRY_DELAY: Final = 10

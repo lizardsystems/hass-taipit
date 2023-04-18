@@ -1,4 +1,5 @@
 """Base entity for Taipit integration."""
+from __future__ import annotations
 from aiotaipit.helpers import get_model_name
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -10,15 +11,16 @@ from .coordinator import TaipitCoordinator
 
 class TaipitBaseCoordinatorEntity(CoordinatorEntity[TaipitCoordinator]):
     """Taipit Base Entity."""
+
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
     meter_id: int
 
     def __init__(
-            self,
-            coordinator: TaipitCoordinator,
-            entity_description: EntityDescription,
-            meter_id: int,
+        self,
+        coordinator: TaipitCoordinator,
+        entity_description: EntityDescription,
+        meter_id: int,
     ) -> None:
         """Initialize the Entity."""
         super().__init__(coordinator=coordinator)

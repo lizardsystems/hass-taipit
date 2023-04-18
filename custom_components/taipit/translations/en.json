@@ -23,13 +23,46 @@
   },
   "entity": {
     "sensor": {
+      "energy_a": {
+        "name": "Active Energy"
+      },
+      "energy_t1_a": {
+        "name": "Active Energy T1"
+      },
+      "energy_t2_a": {
+        "name": "Active Energy T2"
+      },
+      "energy_t3_a": {
+        "name": "Active Energy T3"
+      },
+      "electric_current": {
+        "name": "Electric Current"
+      },
+      "voltage": {
+        "name": "Voltage"
+      },
+      "current_timestamp": {
+        "name": "Last Data Update"
+      },
+      "serial_number": {
+        "name": "Serial Number"
+      },
+      "mac_address": {
+        "name": "MAC address"
+      },
       "signal": {
+        "name": "Signal",
         "state": {
           "offline": "Offline",
           "bad": "Bad",
           "good": "Good",
           "very_good": "Very Good"
         }
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
       }
     }
   }

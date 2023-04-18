@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from homeassistant.components.button import (
     ButtonEntityDescription,
     ButtonEntity,
+    ENTITY_ID_FORMAT,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory, async_generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -38,8 +39,9 @@ BUTTON_DESCRIPTIONS: tuple[TaipitButtonEntityDescription, ...] = (
     TaipitButtonEntityDescription(
         key="refresh",
         icon="mdi:refresh",
-        name="Refresh from cloud",
-        entity_category=EntityCategory.CONFIG,
+        name="Refresh",
+        translation_key="refresh",
+        entity_category=EntityCategory.DIAGNOSTIC,
         async_press=lambda coordinator: (coordinator.async_force_refresh()),
     ),
 )
@@ -51,13 +53,17 @@ class TaipitButtonEntity(TaipitBaseCoordinatorEntity, ButtonEntity):
     entity_description: TaipitButtonEntityDescription
 
     def __init__(
-            self,
-            coordinator: TaipitCoordinator,
-            entity_description: TaipitButtonEntityDescription,
-            meter_id: int
+        self,
+        coordinator: TaipitCoordinator,
+        entity_description: TaipitButtonEntityDescription,
+        meter_id: int,
     ) -> None:
         """Initialize Taipit button."""
         super().__init__(coordinator, entity_description, meter_id)
+
+        self.entity_id = async_generate_entity_id(
+            ENTITY_ID_FORMAT, self._attr_unique_id, hass=coordinator.hass
+        )
 
     async def async_press(self) -> None:
         """Press the button."""
@@ -65,9 +71,9 @@ class TaipitButtonEntity(TaipitBaseCoordinatorEntity, ButtonEntity):
 
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 

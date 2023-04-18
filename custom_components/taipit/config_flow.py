@@ -20,7 +20,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_METERS, DEFAULT_API_TIMEOUT
+from .const import DOMAIN, CONF_METERS, API_TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,17 +48,17 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         )
         api = TaipitApi(auth)
 
-        async with timeout(DEFAULT_API_TIMEOUT):
+        async with timeout(API_TIMEOUT):
             info = await api.async_get_meters()
 
         meters = {meter[CONF_ID]: meter for meter in info}
+
+        return {"title": data[CONF_USERNAME].lower(), CONF_METERS: meters}
 
     except TaipitAuthError as exc:
         raise InvalidAuth from exc
     except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
         raise CannotConnect from exc
-    else:
-        return {"title": data[CONF_USERNAME].lower(), CONF_METERS: meters}
 
 
 class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -68,7 +68,7 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     reauth_entry: ConfigEntry | None = None
 
     async def async_step_user(
-            self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
@@ -88,9 +88,7 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=STEP_USER_DATA_SCHEMA,
-            errors=errors
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
@@ -102,7 +100,7 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-            self, user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Confirm re-authentication with Aladdin Connect."""
         errors: dict[str, str] = {}

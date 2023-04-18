@@ -18,5 +18,44 @@
       "already_configured": "[%key:common::config_flow::abort::already_configured%]",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
+  },
+  "entity": {
+    "sensor": {
+      "energy_a": {
+        "name": "[%key:component::sensor::entity_component::energy_a::name%]"
+      },
+      "energy_t1_a": {
+        "name": "[%key:component::sensor::entity_component::energy_t1_a::name%]"
+      },
+      "energy_t2_a": {
+        "name": "[%key:component::sensor::entity_component::energy_t2_a::name%]"
+      },
+      "energy_t3_a": {
+        "name": "[%key:component::sensor::entity_component::energy_t3_a::name%]"
+      },
+      "electric_current": {
+        "name": "[%key:component::sensor::entity_component::electric_current::name%]"
+      },
+      "voltage": {
+        "name": "[%key:component::sensor::entity_component::voltage::name%]"
+      },
+      "current_timestamp": {
+        "name": "[%key:component::sensor::entity_component::current_timestamp::name%]"
+      },
+      "serial_number": {
+        "name": "[%key:component::sensor::entity_component::serial_number::name%]"
+      },
+      "mac_address": {
+        "name": "[%key:component::sensor::entity_component::mac_address::name%]"
+      },
+      "signal": {
+        "name": "[%key:component::sensor::entity_component::signal::name%]"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "[%key:component::button::entity_component::refresh::name%]"
+      }
+    }
   }
 }
