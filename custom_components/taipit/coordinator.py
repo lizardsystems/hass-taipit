@@ -1,7 +1,8 @@
 """Taipit Cloud Coordinator."""
 from __future__ import annotations
 
-from logging import getLogger
+import logging
+from random import randrange
 from typing import Any
 
 from aiotaipit import TaipitApi, SimpleTaipitAuth
@@ -15,12 +16,12 @@ from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import annotations
-
 from .const import DOMAIN, CONF_INFO, CONF_SERIAL_NUMBER
-from .decorators import api_request_handler
+from .const import REQUEST_REFRESH_DEFAULT_COOLDOWN
+from .decorators import async_api_request_handler
 from .helpers import get_interval_to
 
 
@@ -33,19 +34,29 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
     password: str
 
     def __init__(
-        self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
+            self,
+            hass: HomeAssistant,
+            logger: logging.Logger,
+            config_entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         self.force_next_update = False
         session = async_get_clientsession(hass)
-        self.username = entry.data[CONF_USERNAME]
-        self.password = entry.data[CONF_PASSWORD]
+        self.username = config_entry.data[CONF_USERNAME]
+        self.password = config_entry.data[CONF_PASSWORD]
         auth = SimpleTaipitAuth(self.username, self.password, session)
         self._api = TaipitApi(auth)
 
-        super().__init__(hass, getLogger(__name__), name=DOMAIN)
+        self.data = {}
+
+        super().__init__(hass, logger, name=DOMAIN,
+                         request_refresh_debouncer=Debouncer(
+                             hass,
+                             logger,
+                             cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
+                             immediate=False,
+                         ),
+                         )
 
     async def async_force_refresh(self):
         """Force refresh data."""
@@ -99,23 +110,23 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             raise ConfigEntryNotReady("Can not connect to host") from exc
         finally:
             self.force_next_update = False
-            self.update_interval = get_interval_to([0], [1, 31], list(range(24)))
+            self.update_interval = get_interval_to([randrange(60)], [1, 31], list(range(24)))
             self.logger.debug(
                 "Update interval: %s seconds", self.update_interval.total_seconds()
             )
 
-    @api_request_handler
+    @async_api_request_handler
     async def _async_get_meters(self) -> dict[int, dict[str, Any]]:
         """Get all meters and short info from API."""
         all_meters: list[dict[str, Any]] = await self._api.async_get_meters()
         return {int(meter[CONF_ID]): {CONF_INFO: meter} for meter in all_meters}
 
-    @api_request_handler
+    @async_api_request_handler
     async def _async_get_meter_info(self, meter_id: int) -> dict[str, Any]:
         """Get meter info from API."""
         return await self._api.async_get_meter_info(meter_id)
 
-    @api_request_handler
+    @async_api_request_handler
     async def _async_get_meter_readings(self, meter_id: int) -> dict[str, Any]:
         """Get meter readings from API."""
         return await self._api.async_get_meter_readings(meter_id)

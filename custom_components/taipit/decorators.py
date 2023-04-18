@@ -1,44 +1,34 @@
 """Taipit integration decorators."""
 from __future__ import annotations
-from functools import wraps
-import asyncio
 
+import asyncio
 from collections.abc import Callable, Awaitable, Coroutine
-from typing import TypeVar, ParamSpec, Concatenate, Any
+from functools import wraps
+from random import randrange
 from typing import TYPE_CHECKING
+from typing import TypeVar, ParamSpec, Concatenate, Any
 
 from aiotaipit.exceptions import TaipitError, TaipitAuthError
 from async_timeout import timeout
-
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from random import randrange
+
 from .const import API_TIMEOUT, API_MAX_TRIES, API_RETRY_DELAY
 
-
 if TYPE_CHECKING:
-    from .coordinator import TaipitCoordinator
-
+    pass
 
 _TaipitCoordinatorT = TypeVar("_TaipitCoordinatorT", bound="TaipitCoordinator")
 _R = TypeVar("_R")
 _P = ParamSpec("_P")
 
-_FuncType = Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]]
-_ReturnFuncType = Callable[
-    Concatenate[_TaipitCoordinatorT, _P], Coroutine[Any, Any, _R]
-]
 
-
-def api_request_handler(
-    func: _FuncType[_TaipitCoordinatorT, _P, _R]
-) -> _ReturnFuncType[_TaipitCoordinatorT, _P, _R]:
+def async_api_request_handler(method: Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]]) -> Callable[
+    Concatenate[_TaipitCoordinatorT, _P], Coroutine[Any, Any, _R]]:
     """Decorator to handle API errors."""
 
-    @wraps(func)
-    async def wrapper(
-        self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
-    ) -> _R:
+    @wraps(method)
+    async def wrapper(self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs) -> _R:
         """Wrap an API method."""
         try:
             tries = 0
@@ -48,26 +38,26 @@ def api_request_handler(
                 tries += 1
                 try:
                     async with timeout(api_timeout):
-                        result = await func(self, *args, **kwargs)
+                        result = await method(self, *args, **kwargs)
 
                     if result is not None:
                         return result
 
                     self.logger.error(
-                        "API error while execute function %s", func.__name__
+                        "API error while execute function %s", method.__name__
                     )
                     raise TaipitError(
-                        f"API error while execute function {func.__name__}"
+                        f"API error while execute function {method.__name__}"
                     )
 
                 except asyncio.TimeoutError:
                     api_timeout = tries * API_TIMEOUT
                     self.logger.debug(
-                        "Function %s: Timeout connecting to Taipit", func.__name__
+                        "Function %s: Timeout connecting to Taipit", method.__name__
                     )
                 if tries >= API_MAX_TRIES:
                     raise TaipitError(
-                        f"API error while execute function {func.__name__}"
+                        f"API error while execute function {method.__name__}"
                     )
                 self.logger.warning(
                     "Attempt %d/%d. Wait %d seconds and try again",
