@@ -54,6 +54,7 @@ class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     ] = lambda _: {}
     avabl_fn: Callable[[dict[str, Any]], bool] = lambda _: True
     icon_fn: Callable[[dict[str, Any]], str | None] = lambda _: None
+    enabled: Callable[[dict[str, Any]], bool] = lambda _: True
 
 
 @dataclass
@@ -70,6 +71,7 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
+        avabl_fn=lambda data: data["economizer"]["lastReading"]["energy_a"],
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_a"]),
         translation_key="energy_a",
     ),
@@ -79,6 +81,8 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
+        avabl_fn=lambda data: data["economizer"]["lastReading"]["energy_t1_a"],
+        enabled=lambda data: data["economizer"]["lastReading"]["energy_t1_a"],
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t1_a"]),
         translation_key="energy_t1_a",
     ),
@@ -88,6 +92,8 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
+        avabl_fn=lambda data: data["economizer"]["lastReading"]["energy_t2_a"],
+        enabled=lambda data: data["economizer"]["lastReading"]["energy_t2_a"],
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t2_a"]),
         translation_key="energy_t2_a",
     ),
@@ -97,6 +103,8 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
+        avabl_fn=lambda data: data["economizer"]["lastReading"]["energy_t3_a"],
+        enabled=lambda data: data["economizer"]["lastReading"]["energy_t3_a"],
         value_fn=lambda data: float(data["economizer"]["lastReading"]["energy_t3_a"]),
         translation_key="energy_t3_a",
     ),
@@ -228,6 +236,7 @@ async def async_setup_entry(
         TaipitSensor(coordinator, entity_description, meter_id)
         for entity_description in SENSOR_TYPES
         for meter_id in coordinator.data
+        if entity_description.enabled(coordinator.data[meter_id])
     ]
 
     async_add_entities(entities, True)
