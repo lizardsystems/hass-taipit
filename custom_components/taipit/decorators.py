@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 from typing import TypeVar, ParamSpec, Concatenate, Any
 
 from aiotaipit.exceptions import TaipitError, TaipitAuthError
-from async_timeout import timeout
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -23,8 +22,9 @@ _R = TypeVar("_R")
 _P = ParamSpec("_P")
 
 
-def async_api_request_handler(method: Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]]) -> Callable[
-    Concatenate[_TaipitCoordinatorT, _P], Coroutine[Any, Any, _R]]:
+def async_api_request_handler(
+        method: Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]]
+) -> Callable[Concatenate[_TaipitCoordinatorT, _P], Coroutine[Any, Any, _R]]:
     """Decorator to handle API errors."""
 
     @wraps(method)
@@ -37,7 +37,7 @@ def async_api_request_handler(method: Callable[Concatenate[_TaipitCoordinatorT, 
             while True:
                 tries += 1
                 try:
-                    async with timeout(api_timeout):
+                    async with asyncio.timeout(api_timeout):
                         result = await method(self, *args, **kwargs)
 
                     if result is not None:

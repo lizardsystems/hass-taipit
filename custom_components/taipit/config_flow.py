@@ -11,16 +11,15 @@ import voluptuous as vol
 from aiotaipit import TaipitApi, SimpleTaipitAuth
 from aiotaipit.const import GUEST_USERNAME, GUEST_PASSWORD
 from aiotaipit.exceptions import TaipitAuthError
-from async_timeout import timeout
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, CONF_METERS, API_TIMEOUT
+from .exceptions import CannotConnect, InvalidAuth
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         )
         api = TaipitApi(auth)
 
-        async with timeout(API_TIMEOUT):
+        async with asyncio.timeout(API_TIMEOUT):
             info = await api.async_get_meters()
 
         meters = {meter[CONF_ID]: meter for meter in info}
@@ -68,7 +67,7 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     reauth_entry: ConfigEntry | None = None
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+            self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
         errors: dict[str, str] = {}
@@ -100,9 +99,9 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
+            self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Confirm re-authentication with Aladdin Connect."""
+        """Confirm re-authentication with Taipit."""
         errors: dict[str, str] = {}
 
         if user_input:
@@ -138,11 +137,3 @@ class TaipitConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=REAUTH_SCHEMA,
             errors=errors,
         )
-
-
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
