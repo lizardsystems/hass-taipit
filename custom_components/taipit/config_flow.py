@@ -180,6 +180,15 @@ class TaipitOptionsFlowHandler(OptionsFlowWithConfigEntry):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
+                changed = self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    options=user_input,
+                )
+                if changed:
+                    await self.hass.config_entries.async_reload(
+                        self.config_entry.entry_id
+                    )
+
                 return self.async_create_entry(data=user_input)
 
         default_username = self.config_entry.data[CONF_USERNAME]

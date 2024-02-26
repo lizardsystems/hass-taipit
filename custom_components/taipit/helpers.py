@@ -25,7 +25,7 @@ def utc_from_timestamp_tz(timestamp: int, hours: int) -> datetime:
 
 
 def get_interval_to(
-        seconds: list[int], minutes: list[int], hours: list[int]
+    seconds: list[int], minutes: list[int], hours: list[int]
 ) -> timedelta:
     """Return data update interval."""
     now = dt.utcnow()
@@ -50,7 +50,7 @@ def get_update_interval(update_period: int) -> timedelta:
         _now,
         seconds=[randrange(60)],
         minutes=[randrange(minute + 2, minute + 4)],
-        hours=[range(hour, 24)]
+        hours=[hour],
     )
     minutes_to_next_time = (next_time - _now).total_seconds() / 60
     interval = timedelta(minutes=minutes_to_next_time)
@@ -74,7 +74,7 @@ def get_next_update_time(readings: dict[str, Any]) -> datetime:
 def format_mac(value: str) -> str:
     """Format MAC Address"""
     mac = value.rjust(12, "0")
-    return ":".join(mac.lower()[i: i + 2] for i in range(0, 12, 2))
+    return ":".join(mac.lower()[i : i + 2] for i in range(0, 12, 2))
 
 
 def signal_text(limits: Sequence[int], value: StateType) -> str:
