@@ -1,9 +1,13 @@
 {
-  "title": "Taipit",
   "config": {
-    "abort": {
-      "already_configured": "Account is already configured",
-      "reauth_successful": "Re-authentication was successful"
+    "step": {
+      "user": {
+        "title": "Configure Taipit",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
     },
     "error": {
       "cannot_connect": "Failed to connect",
@@ -11,12 +15,21 @@
       "unknown": "Unexpected error",
       "no_devices": "No devices found in account"
     },
+    "abort": {
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "options": {
     "step": {
-      "user": {
-        "title": "Fill in your Taipit login information",
+      "init": {
+        "title": "Options",
+        "description": "Change integration options",
         "data": {
-          "password": "Password",
-          "username": "Username"
+          "update_period": "Update period (minutes)"
+        },
+        "data_description": {
+          "update_period": "How often to update data from Taipit"
         }
       }
     }

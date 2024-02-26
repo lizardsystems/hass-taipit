@@ -23,12 +23,14 @@ _P = ParamSpec("_P")
 
 
 def async_api_request_handler(
-        method: Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]]
+    method: Callable[Concatenate[_TaipitCoordinatorT, _P], Awaitable[_R]],
 ) -> Callable[Concatenate[_TaipitCoordinatorT, _P], Coroutine[Any, Any, _R]]:
     """Decorator to handle API errors."""
 
     @wraps(method)
-    async def wrapper(self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+    async def wrapper(
+        self: _TaipitCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
+    ) -> _R:
         """Wrap an API method."""
         try:
             tries = 0
@@ -50,7 +52,7 @@ def async_api_request_handler(
                         f"API error while execute function {method.__name__}"
                     )
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     api_timeout = tries * API_TIMEOUT
                     self.logger.debug(
                         "Function %s: Timeout connecting to Taipit", method.__name__

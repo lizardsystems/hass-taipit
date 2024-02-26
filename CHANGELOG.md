@@ -5,12 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2024-02-26
+
+### Added
+
+- Используется asyncio.timeout вместо устаревшего пакета asyncio_timeout.
+- Добавлена возможность изменения интервала обновления сенсоров.
+- Добавлена возможность изменения логина и пароля без удаления интеграции.
+- Обновлена библиотека aiotaipit до версии 2.2.0.
+
 ## [1.3.0] - 2023-04-22
 
 ### Added
 
 - Добавлено автоматическое скрытие сенсоров для тарифов
-
 
 ## [1.2.1] - 2023-04-18
 

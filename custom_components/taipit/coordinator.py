@@ -5,14 +5,15 @@ import logging
 from random import randrange
 from typing import Any
 
-from aiotaipit import TaipitApi, SimpleTaipitAuth
+from aiotaipit import SimpleTaipitAuth, TaipitApi
 from aiotaipit.exceptions import (
+    TaipitAuthInvalidClient,
     TaipitAuthInvalidGrant,
     TaipitError,
-    TaipitAuthInvalidClient,
 )
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_ID
+from homeassistant.const import CONF_ID, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -20,10 +21,16 @@ from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt
 
-from .const import DOMAIN, CONF_INFO, CONF_SERIAL_NUMBER
-from .const import REQUEST_REFRESH_DEFAULT_COOLDOWN
+from .const import (
+    CONF_INFO,
+    CONF_SERIAL_NUMBER,
+    CONF_UPDATE_PERIOD,
+    DEFAULT_UPDATE_PERIOD,
+    DOMAIN,
+    REQUEST_REFRESH_DEFAULT_COOLDOWN,
+)
 from .decorators import async_api_request_handler
-from .helpers import utc_from_timestamp_tz, get_interval_to
+from .helpers import get_update_interval, utc_from_timestamp_tz
 
 
 class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
@@ -35,19 +42,21 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
     password: str
 
     def __init__(
-            self,
-            hass: HomeAssistant,
-            logger: logging.Logger,
-            config_entry: ConfigEntry,
+        self,
+        hass: HomeAssistant,
+        logger: logging.Logger,
+        config_entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         self.force_next_update = False
         session = async_get_clientsession(hass)
         self.username = config_entry.data[CONF_USERNAME]
         self.password = config_entry.data[CONF_PASSWORD]
+        self.update_period = config_entry.options.get(
+            CONF_UPDATE_PERIOD, DEFAULT_UPDATE_PERIOD
+        )
         auth = SimpleTaipitAuth(self.username, self.password, session)
         self._api = TaipitApi(auth)
-
         super().__init__(
             hass,
             logger,
@@ -114,16 +123,7 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             raise ConfigEntryNotReady("Can not connect to host") from exc
         finally:
             self.force_next_update = False
-            now_minute = dt.now().minute
-            if now_minute > 30:
-                self.update_interval = get_interval_to(
-                    [randrange(60)], [randrange(2, 5)], list(range(24))
-                )
-            else:
-                self.update_interval = get_interval_to(
-                    [randrange(60)], [randrange(32, 35)], list(range(24))
-                )
-
+            self.update_interval = get_update_interval(self.update_period)
             self.logger.debug(
                 "Update interval: %s seconds", self.update_interval.total_seconds()
             )
