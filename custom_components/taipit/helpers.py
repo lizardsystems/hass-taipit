@@ -40,21 +40,10 @@ def get_interval_to(
 
 def get_update_interval(update_period: int) -> timedelta:
     """Return data update interval."""
-    _now = dt.utcnow()
-    hour = _now.hour
-    minute = (_now.minute // update_period + 1) * update_period
-    if minute >= 60:
-        hour += minute // 60
-        minute = minute % 60
-    next_time = dt.find_next_time_expression_time(
-        _now,
-        seconds=[randrange(60)],
-        minutes=[randrange(minute + 2, minute + 4)],
-        hours=[hour],
-    )
-    minutes_to_next_time = (next_time - _now).total_seconds() / 60
-    interval = timedelta(minutes=minutes_to_next_time)
-
+    _now = dt.now()
+    total_minutes = (_now - datetime(2000, 1, 1, 0, 0, 0, 0, tzinfo=_now.tzinfo)).total_seconds()//60
+    minutes_to_next_time = update_period - (total_minutes % update_period)
+    interval = timedelta(minutes=minutes_to_next_time + randrange(2, 3), seconds=randrange(0, 60))
     return interval
 
 
