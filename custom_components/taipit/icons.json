@@ -1,0 +1,47 @@
+{
+  "entity": {
+    "sensor": {
+      "energy_a": {
+        "default": "mdi:lightning-bolt"
+      },
+      "energy_t1_a": {
+        "default": "mdi:lightning-bolt"
+      },
+      "energy_t2_a": {
+        "default": "mdi:lightning-bolt"
+      },
+      "energy_t3_a": {
+        "default": "mdi:lightning-bolt"
+      },
+      "electric_current": {
+        "default": "mdi:sine-wave"
+      },
+      "voltage": {
+        "default": "mdi:current-ac"
+      },
+      "current_timestamp": {
+        "default": "mdi:update"
+      },
+      "serial_number": {
+        "default": "mdi:identifier"
+      },
+      "mac_address": {
+        "default": "mdi:network"
+      },
+      "signal": {
+        "default": "mdi:signal-cellular-3",
+        "state": {
+          "offline": "mdi:signal-cellular-outline",
+          "bad": "mdi:signal-cellular-1",
+          "good": "mdi:signal-cellular-2",
+          "very_good": "mdi:signal-cellular-3"
+        }
+      }
+    },
+    "button": {
+      "refresh": {
+        "default": "mdi:refresh"
+      }
+    }
+  }
+}
