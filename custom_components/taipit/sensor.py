@@ -38,14 +38,14 @@ from .entity import TaipitBaseCoordinatorEntity
 from .helpers import utc_from_timestamp_tz, format_mac, signal_text
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class TaipitEntityDescriptionMixin:
     """Mixin for required Taipit base description keys."""
 
     value_fn: Callable[[dict[str, Any]], StateType | date | datetime]
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     """Describes Taipit sensor entity default overrides."""
 
@@ -57,7 +57,7 @@ class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     enabled: Callable[[dict[str, Any]], bool] = lambda _: True
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class TaipitSensorEntityDescription(
     TaipitBaseSensorEntityDescription, TaipitEntityDescriptionMixin
 ):
