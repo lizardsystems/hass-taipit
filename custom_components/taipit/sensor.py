@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 from datetime import datetime, date
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -41,17 +41,12 @@ from .helpers import utc_from_timestamp_tz, format_mac, signal_text
 @dataclass(frozen=True, kw_only=True)
 class TaipitEntityDescriptionMixin:
     """Mixin for required Taipit base description keys."""
-
     value_fn: Callable[[dict[str, Any]], StateType | date | datetime]
 
 
 @dataclass(frozen=True, kw_only=True)
 class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     """Describes Taipit sensor entity default overrides."""
-
-    attr_fn: Callable[
-        [dict[str, Any]], dict[str, StateType | datetime | date]
-    ] = lambda _: {}
     avabl_fn: Callable[[dict[str, Any]], bool] = lambda _: True
     icon_fn: Callable[[dict[str, Any]], str | None] = lambda _: None
     enabled: Callable[[dict[str, Any]], bool] = lambda _: True
@@ -179,10 +174,10 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
     entity_description: TaipitSensorEntityDescription
 
     def __init__(
-        self,
-        coordinator: TaipitCoordinator,
-        entity_description: TaipitSensorEntityDescription,
-        meter_id: int,
+            self,
+            coordinator: TaipitCoordinator,
+            entity_description: TaipitSensorEntityDescription,
+            meter_id: int,
     ) -> None:
         """Initialize the Sensor."""
         super().__init__(coordinator, entity_description, meter_id)
@@ -194,20 +189,16 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         return (
-            super().available
-            and self.coordinator.data is not None
-            and self.coordinator.data.get(self.meter_id) is not None
-            and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
+                super().available
+                and self.coordinator.data is not None
+                and self.coordinator.data.get(self.meter_id) is not None
+                and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
         )
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._attr_native_value = self.entity_description.value_fn(
-            self.coordinator.data[self.meter_id]
-        )
-
-        self._attr_extra_state_attributes = self.entity_description.attr_fn(
             self.coordinator.data[self.meter_id]
         )
 
@@ -224,9 +215,9 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 
