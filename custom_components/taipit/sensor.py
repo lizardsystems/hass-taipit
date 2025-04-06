@@ -1,23 +1,24 @@
 """Taipit Sensor definitions."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
+    ENTITY_ID_FORMAT,
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
-    SensorDeviceClass,
-    ENTITY_ID_FORMAT,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    UnitOfEnergy,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
+    UnitOfEnergy,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory, async_generate_entity_id
@@ -27,26 +28,28 @@ from homeassistant.util.dt import as_local
 
 from .const import (
     DOMAIN,
-    STATE_OFFLINE,
+    SIGNAL_ICONS,
     STATE_BAD,
     STATE_GOOD,
+    STATE_OFFLINE,
     STATE_VERY_GOOD,
-    SIGNAL_ICONS,
 )
 from .coordinator import TaipitCoordinator
 from .entity import TaipitBaseCoordinatorEntity
-from .helpers import utc_from_timestamp_tz, format_mac, signal_text
+from .helpers import format_mac, signal_text, utc_from_timestamp_tz
 
 
 @dataclass(frozen=True, kw_only=True)
 class TaipitEntityDescriptionMixin:
     """Mixin for required Taipit base description keys."""
+
     value_fn: Callable[[dict[str, Any]], StateType | date | datetime]
 
 
 @dataclass(frozen=True, kw_only=True)
 class TaipitBaseSensorEntityDescription(SensorEntityDescription):
     """Describes Taipit sensor entity default overrides."""
+
     avabl_fn: Callable[[dict[str, Any]], bool] = lambda _: True
     icon_fn: Callable[[dict[str, Any]], str | None] = lambda _: None
     enabled: Callable[[dict[str, Any]], bool] = lambda _: True
@@ -109,9 +112,10 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
-        avabl_fn=lambda data: data["economizer"]["addParams"]["values"]["i"][0],
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) == 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) == 1,
         value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["i"][0]),
-        translation_key="electric_current",
+        translation_key="electric_current_phase_1",
     ),
     TaipitSensorEntityDescription(
         key="voltage",
@@ -119,9 +123,136 @@ SENSOR_TYPES: tuple[TaipitSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLTAGE,
-        avabl_fn=lambda data: data["economizer"]["addParams"]["values"]["u"][0],
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) == 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) == 1,
         value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["u"][0]),
         translation_key="voltage",
+    ),
+    TaipitSensorEntityDescription(
+        key="power_factor",
+        name="Power Factor",
+        native_unit_of_measurement=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) == 1
+        and data["economizer"]["addParams"]["values"]["cos"][0] != "-",
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) == 1
+        and data["economizer"]["addParams"]["values"]["cos"][0] != "-",
+        value_fn=lambda data: float(
+            data["economizer"]["addParams"]["values"]["cos"][0]
+        ),
+        translation_key="power_factor",
+    ),
+    TaipitSensorEntityDescription(
+        key="electric_current_phase_1",
+        name="Electric Current Phase 1",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 1,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["i"][0]),
+        translation_key="electric_current_phase_1",
+    ),
+    TaipitSensorEntityDescription(
+        key="voltage_phase_1",
+        name="Voltage Phase 1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 1,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["u"][0]),
+        translation_key="voltage_phase_1",
+    ),
+    TaipitSensorEntityDescription(
+        key="power_factor_phase_1",
+        name="Power Factor Phase 1",
+        native_unit_of_measurement=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 1
+        and data["economizer"]["addParams"]["values"]["cos"][0] != "-",
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 1
+        and data["economizer"]["addParams"]["values"]["cos"][0] != "-",
+        value_fn=lambda data: float(
+            data["economizer"]["addParams"]["values"]["cos"][0]
+        ),
+        translation_key="power_factor_1",
+    ),
+    TaipitSensorEntityDescription(
+        key="electric_current_phase_2",
+        name="Electric Current Phase 2",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 1,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["i"][1]),
+        translation_key="electric_current_phase_2",
+    ),
+    TaipitSensorEntityDescription(
+        key="voltage_phase_2",
+        name="Voltage Phase 2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 1,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 1,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["u"][1]),
+        translation_key="voltage_phase_2",
+    ),
+    TaipitSensorEntityDescription(
+        key="power_factor_phase_2",
+        name="Power Factor Phase 2",
+        native_unit_of_measurement=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 1
+        and data["economizer"]["addParams"]["values"]["cos"][1] != "-",
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 1
+        and data["economizer"]["addParams"]["values"]["cos"][1] != "-",
+        value_fn=lambda data: float(
+            data["economizer"]["addParams"]["values"]["cos"][1]
+        ),
+        translation_key="power_factor_2",
+    ),
+    TaipitSensorEntityDescription(
+        key="electric_current_phase_3",
+        name="Electric Current Phase 3",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 2,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["i"]) > 2,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["i"][2]),
+        translation_key="electric_current_phase_3",
+    ),
+    TaipitSensorEntityDescription(
+        key="voltage_phase_3",
+        name="Voltage Phase 3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 2,
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["u"]) > 2,
+        value_fn=lambda data: float(data["economizer"]["addParams"]["values"]["u"][2]),
+        translation_key="voltage_phase_3",
+    ),
+    TaipitSensorEntityDescription(
+        key="power_factor_phase_3",
+        name="Power Factor Phase 3",
+        native_unit_of_measurement=None,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        avabl_fn=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 2
+        and data["economizer"]["addParams"]["values"]["cos"][2] != "-",
+        enabled=lambda data: len(data["economizer"]["addParams"]["values"]["cos"]) > 2
+        and data["economizer"]["addParams"]["values"]["cos"][2] != "-",
+        value_fn=lambda data: float(
+            data["economizer"]["addParams"]["values"]["cos"][2]
+        ),
+        translation_key="power_factor_3",
     ),
     TaipitSensorEntityDescription(
         key="current_timestamp",
@@ -174,10 +305,10 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
     entity_description: TaipitSensorEntityDescription
 
     def __init__(
-            self,
-            coordinator: TaipitCoordinator,
-            entity_description: TaipitSensorEntityDescription,
-            meter_id: int,
+        self,
+        coordinator: TaipitCoordinator,
+        entity_description: TaipitSensorEntityDescription,
+        meter_id: int,
     ) -> None:
         """Initialize the Sensor."""
         super().__init__(coordinator, entity_description, meter_id)
@@ -189,10 +320,10 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return True if entity is available."""
         return (
-                super().available
-                and self.coordinator.data is not None
-                and self.coordinator.data.get(self.meter_id) is not None
-                and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
+            super().available
+            and self.coordinator.data is not None
+            and self.coordinator.data.get(self.meter_id) is not None
+            and self.entity_description.avabl_fn(self.coordinator.data[self.meter_id])
         )
 
     @callback
@@ -215,9 +346,9 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
 
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 

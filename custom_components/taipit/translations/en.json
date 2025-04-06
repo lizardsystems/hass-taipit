@@ -54,6 +54,36 @@
       "voltage": {
         "name": "Voltage"
       },
+      "power_factor": {
+        "name": "Power Factor"
+      },
+      "electric_current_phase_1": {
+        "name": "Electric Current Phase 1"
+      },
+      "electric_current_phase_2": {
+        "name": "Electric Current Phase 2"
+      },
+      "electric_current_phase_3": {
+        "name": "Electric Current Phase 3"
+      },
+      "voltage_phase_1": {
+        "name": "Voltage Phase 1"
+      },
+      "voltage_phase_2": {
+        "name": "Voltage Phase 2"
+      },
+      "voltage_phase_3": {
+        "name": "Voltage Phase 3"
+      },
+      "power_factor_phase_1": {
+        "name": "Power Factor Phase 1"
+      },
+      "power_factor_phase_2": {
+        "name": "Power Factor Phase 2"
+      },
+      "power_factor_phase_3": {
+        "name": "Power Factor Phase 3"
+      },
       "current_timestamp": {
         "name": "Last Data Update"
       },
