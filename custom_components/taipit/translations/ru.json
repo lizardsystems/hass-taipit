@@ -55,8 +55,38 @@
       "voltage": {
         "name": "Напряжение"
       },
+      "power_factor": {
+        "name": "Коэффициент мощности"
+      },
+      "electric_current_phase_1": {
+        "name": "Ток фаза 1"
+      },
+      "electric_current_phase_2": {
+        "name": "Ток фаза 2"
+      },
+      "electric_current_phase_3": {
+        "name": "Ток фаза 3"
+      },
+      "voltage_phase_1": {
+        "name": "Напряжение фаза 1"
+      },
+      "voltage_phase_2": {
+        "name": "Напряжение фаза 2"
+      },
+      "voltage_phase_3": {
+        "name": "Напряжение фаза 3"
+      },
       "current_timestamp": {
         "name": "Последнее обновление"
+      },
+      "power_factor_phase_1": {
+        "name": "Коэффициент мощности фаза 1"
+      },
+      "power_factor_phase_2": {
+        "name": "Коэффициент мощности фаза 2"
+      },
+      "power_factor_phase_3": {
+        "name": "Коэффициент мощности фаза 3"
       },
       "serial_number": {
         "name": "Серийный номер"

@@ -2,9 +2,9 @@
 
 Этот репозиторий содержит настраиваемый компонент для Home Assistant для отображения данных со счетчиков, зарегистрированных в сервисе [Тайпит](https://cloud.meters.taipit.ru/).
 
-Работа интеграции проверена на счетчиках [НЕВА МТ 114 AS WF1P](https://www.meters.taipit.ru/catalog/neva/odnofaznyie-schetchiki/mnogotarifnyie/2929/) 
+Работа интеграции проверена на однофазных счетчиках [НЕВА МТ 114 AS WF1P](https://www.meters.taipit.ru/catalog/neva/odnofaznyie-schetchiki/mnogotarifnyie/2929/) и трехфазных [НЕВА МТ 315](https://www.meters.taipit.ru/catalog/neva/trehfaznyie-schetchiki/mnogotarifnyie/3281/)
 
-![НЕВА МТ 114 AS WF1P](images/neva_mt_114_as_wf1p_3.png)
+![НЕВА МТ 114 AS WF1P](images/neva_mt_114_as_wf1p_3.png) ![НЕВА МТ 315](images/neva_mt_315_1.0_AR_GSM1BSCP28-2.png)
 
 # Установка
 
@@ -57,6 +57,7 @@
  - Активная энергия T3 (можно отключить если не используется трех тарифный план)
  - Напряжение
  - Ток
+ - Коэффициент мощности (cos φ), при наличии
  - Серийный номер счетчика
  - MAC адрес модуля Wi-Fi
  - Уровень сигнала модуля Wi-Fi
