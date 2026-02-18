@@ -1,0 +1,4 @@
+pytest
+pytest-asyncio
+pytest-homeassistant-custom-component
+aiotaipit>=3.0.0

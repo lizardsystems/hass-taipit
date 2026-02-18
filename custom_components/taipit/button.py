@@ -30,7 +30,7 @@ BUTTON_DESCRIPTIONS: tuple[TaipitButtonEntityDescription, ...] = (
         key="refresh",
         translation_key="refresh",
         entity_category=EntityCategory.DIAGNOSTIC,
-        async_press=lambda coordinator: (coordinator.async_force_refresh()),
+        async_press=lambda coordinator: coordinator.async_force_refresh(),
     ),
 )
 

@@ -1,5 +1,6 @@
 """Base entity for Taipit integration."""
 from __future__ import annotations
+
 from aiotaipit.helpers import get_model_name
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity

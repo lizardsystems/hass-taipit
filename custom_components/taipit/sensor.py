@@ -18,7 +18,7 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfEnergy,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory, async_generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -285,18 +285,17 @@ class TaipitSensor(TaipitBaseCoordinatorEntity, SensorEntity):
             )
         )
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        if not self.available:
-            self.async_write_ha_state()
-            return
-
-        self._attr_native_value = self.entity_description.value_fn(
-            self.coordinator.data[self.meter_id]
-        )
-
-        self.async_write_ha_state()
+    @property
+    def native_value(self) -> StateType | date | datetime:
+        """Return the state of the sensor."""
+        data = self.coordinator.data
+        if (
+            data is None
+            or data.get(self.meter_id) is None
+            or not self.entity_description.available_fn(data[self.meter_id])
+        ):
+            return None
+        return self.entity_description.value_fn(data[self.meter_id])
 
 
 async def async_setup_entry(

@@ -30,6 +30,7 @@ async def async_get_config_entry_diagnostics(
         "config_entry": async_redact_data(dict(entry.data), TO_REDACT_CONFIG),
         "coordinator": {
             "last_update_success": coordinator.last_update_success,
+            "update_interval": str(coordinator.update_interval),
             "meters": meters_data,
         },
     }

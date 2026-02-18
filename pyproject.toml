@@ -1,0 +1,47 @@
+[project]
+name = "hass-taipit"
+version = "3.0.0"
+description = "Taipit Cloud Meters custom integration for Home Assistant"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+keywords = [
+    "electricity",
+    "energy",
+    "home-assistant",
+    "taipit",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+
+[[project.authors]]
+name = "LizardSystems"
+
+[project.urls]
+Repository = "https://github.com/lizardsystems/hass-taipit"
+Documentation = "https://github.com/lizardsystems/hass-taipit"
+"Bug Tracker" = "https://github.com/lizardsystems/hass-taipit/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-homeassistant-custom-component",
+    "aiotaipit>=3.0.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["custom_components*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
