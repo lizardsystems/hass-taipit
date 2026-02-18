@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-02-18
+
+### Added
+
+- Добавлена диагностика интеграции (diagnostics.py)
+- Добавлен файл strings.json как источник переводов
+- Добавлен шаг reconfigure для изменения пароля
+- Добавлено сохранение и восстановление токенов авторизации
+- Добавлено автоматическое удаление устаревших устройств
+
+### Changed
+
+- Обновлена библиотека aiotaipit до версии 3.0.0
+- Использован паттерн runtime_data вместо hass.data[DOMAIN]
+- Разделен декоратор на async_retry и async_api_request_handler
+- Модернизирован config_flow: ConfigFlowResult, _get_reauth_entry()
+- Удалён options flow (интервал обновления фиксирован — 30 минут)
+- Убраны name= из описаний сенсоров (используется translation_key)
+- Объединены mixin-классы в единые описания сущностей
+- Добавлены аннотации Final ко всем константам
+- Иконки сигнала перенесены из кода в icons.json (state-based icons)
+- Удалён неиспользуемый exceptions.py
+
+### Improved
+
+- Улучшен алгоритм обновления: координатор вычисляет следующий слот передачи счётчика по часовой сетке (:00 и :30), учитывает дрейф часов счётчика (+3 мин) и опрашивает облако только после ожидаемого времени обновления
+- Исправлен deprecated вызов dt.utcnow() → dt.now() в get_interval_to()
+
+### Fixed
+
+- Исправлена ошибка: ConfigEntryNotReady заменена на UpdateFailed при ошибках API после первичной настройки
+- Исправлен translation_key для однофазного датчика тока (electric_current вместо electric_current_phase_1)
+- Добавлена защита от краша в _handle_coordinator_update при недоступности данных
+- Удалён мёртвый код обработки исключений в координаторе (обрабатывается декоратором)
+
 ## [2.0.0] - 2025-04-06
 
 ### Added

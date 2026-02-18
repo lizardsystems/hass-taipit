@@ -1,38 +1,37 @@
 {
   "title": "Тайпит",
   "config": {
-    "abort": {
-      "already_configured": "Этот аккаунт уже добавлено в Home Assistant.",
-      "reauth_successful": "Повторная аутентификация выполнена успешно."
-    },
-    "error": {
-      "cannot_connect": "Не удалось подключиться.",
-      "invalid_auth": "Ошибка аутентификации.",
-      "unknown": "Непредвиденная ошибка.",
-      "no_devices": "В аккаунте не найдено ни одного устройства."
-    },
     "step": {
       "user": {
         "title": "Укажите учетную запись сервиса Тайпит",
         "data": {
-          "password": "Пароль",
-          "username": "Логин"
+          "username": "Логин",
+          "password": "Пароль"
         }
-      }
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Настройки интеграции Тайпит",
-        "description": "Укажите данные для подключения к сервису Тайпит",
+      },
+      "reauth_confirm": {
+        "title": "Повторная аутентификация Тайпит",
         "data": {
-          "update_period": "Период обновления данных (минуты)"
-        },
-        "data_description": {
-          "update_period": "Укажите период обновления данных в минутах. Минимальное значение - 10 минут. Значение по умолчанию 30 минут."
+          "password": "Пароль"
+        }
+      },
+      "reconfigure": {
+        "title": "Перенастройка Тайпит",
+        "description": "Обновите настройки для {username}",
+        "data": {
+          "password": "Пароль"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться.",
+      "invalid_auth": "Ошибка аутентификации.",
+      "unknown": "Непредвиденная ошибка."
+    },
+    "abort": {
+      "already_configured": "Этот аккаунт уже добавлено в Home Assistant.",
+      "reauth_successful": "Повторная аутентификация выполнена успешно.",
+      "reconfigure_successful": "Перенастройка выполнена успешно."
     }
   },
   "entity": {
@@ -76,17 +75,17 @@
       "voltage_phase_3": {
         "name": "Напряжение фаза 3"
       },
-      "current_timestamp": {
-        "name": "Последнее обновление"
-      },
-      "power_factor_phase_1": {
+      "power_factor_1": {
         "name": "Коэффициент мощности фаза 1"
       },
-      "power_factor_phase_2": {
+      "power_factor_2": {
         "name": "Коэффициент мощности фаза 2"
       },
-      "power_factor_phase_3": {
+      "power_factor_3": {
         "name": "Коэффициент мощности фаза 3"
+      },
+      "current_timestamp": {
+        "name": "Последнее обновление"
       },
       "serial_number": {
         "name": "Серийный номер"

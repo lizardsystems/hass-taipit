@@ -2,102 +2,106 @@
 from __future__ import annotations
 
 import logging
-from random import randrange
 from typing import Any
 
 from aiotaipit import SimpleTaipitAuth, TaipitApi
-from aiotaipit.exceptions import (
-    TaipitAuthInvalidClient,
-    TaipitAuthInvalidGrant,
-    TaipitError,
-)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ID, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.util import dt
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     CONF_INFO,
     CONF_SERIAL_NUMBER,
-    CONF_UPDATE_PERIOD,
-    DEFAULT_UPDATE_PERIOD,
+    CONF_TOKEN,
     DOMAIN,
     REQUEST_REFRESH_DEFAULT_COOLDOWN,
 )
 from .decorators import async_api_request_handler
-from .helpers import get_update_interval, utc_from_timestamp_tz
+from .helpers import get_smart_update_interval, get_update_interval, utc_from_timestamp_tz
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
     """Coordinator is responsible for querying the device at a specified route."""
 
+    config_entry: ConfigEntry
     _api: TaipitApi
     force_next_update: bool
     username: str
-    password: str
 
     def __init__(
         self,
         hass: HomeAssistant,
-        logger: logging.Logger,
+        *,
         config_entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         self.force_next_update = False
         session = async_get_clientsession(hass)
         self.username = config_entry.data[CONF_USERNAME]
-        self.password = config_entry.data[CONF_PASSWORD]
-        self.update_period = config_entry.options.get(
-            CONF_UPDATE_PERIOD, DEFAULT_UPDATE_PERIOD
+        auth = SimpleTaipitAuth(
+            config_entry.data[CONF_USERNAME],
+            config_entry.data[CONF_PASSWORD],
+            session,
+            token=config_entry.data.get(CONF_TOKEN),
+            token_update_callback=self._on_token_update,
         )
-        auth = SimpleTaipitAuth(self.username, self.password, session)
         self._api = TaipitApi(auth)
         super().__init__(
             hass,
-            logger,
+            _LOGGER,
             name=DOMAIN,
+            config_entry=config_entry,
+            update_interval=get_update_interval(),
             request_refresh_debouncer=Debouncer(
                 hass,
-                logger,
+                _LOGGER,
                 cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
                 immediate=False,
             ),
         )
 
-    async def async_force_refresh(self):
+    def _on_token_update(self, token_data: dict[str, Any]) -> None:
+        """Persist updated tokens to config entry."""
+        _LOGGER.debug("Tokens updated, persisting to config entry")
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data={**self.config_entry.data, CONF_TOKEN: token_data},
+        )
+
+    async def async_force_refresh(self) -> None:
         """Force refresh data."""
         self.force_next_update = True
         await self.async_refresh()
 
-    async def _async_update_data(self) -> dict[int, Any] | None:
+    async def _async_update_data(self) -> dict[int, Any]:
         """Fetch data from Taipit."""
-        _data: dict[int, dict] = self.data
+        _data: dict[int, dict[str, Any]] | None = self.data
         try:
-            self.logger.debug("Start updating Taipit data")
+            _LOGGER.debug("Start updating Taipit data")
             if _data is None or self.force_next_update:
                 # fetch list of meters in account
-                self.logger.debug("Retrieving meters for user %s", self.username)
+                _LOGGER.debug("Retrieving meters for user %s", self.username)
                 _data = await self._async_get_meters()
-                if _data:
-                    self.logger.debug(
-                        "%d meters retrieved for user %s", len(_data), self.username
+                if not _data:
+                    raise UpdateFailed(
+                        f"No meters retrieved for user {self.username}"
                     )
-                else:
-                    self.logger.warning(
-                        "No meters retrieved for user %s", self.username
-                    )
-                    return None
+
+                _LOGGER.debug(
+                    "%d meters retrieved for user %s", len(_data), self.username
+                )
 
                 # fetch extended meter info including model name
                 for meter_id in _data:
                     meter_info = await self._async_get_meter_info(meter_id)
                     _data[meter_id]["extended"] = meter_info
-                    self.logger.debug(
+                    _LOGGER.debug(
                         "Retrieved information for meter %s",
                         _data[meter_id][CONF_INFO][CONF_SERIAL_NUMBER],
                     )
@@ -105,27 +109,24 @@ class TaipitCoordinator(DataUpdateCoordinator[dict[int, dict[str, Any]]]):
             # fetch the latest readings
             for meter_id in _data:
                 serial_number = _data[meter_id][CONF_INFO][CONF_SERIAL_NUMBER]
-                self.logger.debug("Retrieving readings for meter %s...", serial_number)
+                _LOGGER.debug("Retrieving readings for meter %s...", serial_number)
                 readings = await self._async_get_meter_readings(meter_id)
                 _data[meter_id].update(readings)
-                self.logger.debug("Retrieved readings for meter %s.", serial_number)
+                _LOGGER.debug("Retrieved readings for meter %s.", serial_number)
                 _data[meter_id]["last_update_time"] = utc_from_timestamp_tz(
                     readings["economizer"]["lastReading"]["ts_tz"],
                     readings["economizer"]["timezone"],
                 )
             return _data
 
-        except TaipitAuthInvalidGrant as exc:
-            raise ConfigEntryAuthFailed("Incorrect Login or Password") from exc
-        except TaipitAuthInvalidClient as exc:
-            raise ConfigEntryAuthFailed("Incorrect client_id or client_secret") from exc
-        except TaipitError as exc:
-            raise ConfigEntryNotReady("Can not connect to host") from exc
         finally:
             self.force_next_update = False
-            self.update_interval = get_update_interval(self.update_period)
-            self.logger.debug(
-                "Update interval: %s seconds", self.update_interval.total_seconds()
+            if _data:
+                self.update_interval = get_smart_update_interval(_data)
+            else:
+                self.update_interval = get_update_interval()
+            _LOGGER.debug(
+                "Next update in %s seconds", self.update_interval.total_seconds()
             )
 
     @async_api_request_handler
