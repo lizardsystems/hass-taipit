@@ -37,8 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Исправлена ошибка: ConfigEntryNotReady заменена на UpdateFailed при ошибках API после первичной настройки
 - Исправлен translation_key для однофазного датчика тока (electric_current вместо electric_current_phase_1)
-- Добавлена защита от краша в _handle_coordinator_update при недоступности данных
+- Исправлена ошибка: сенсоры показывали состояние «unknown» после перезапуска HA — заменён _handle_coordinator_update на свойство native_value
 - Удалён мёртвый код обработки исключений в координаторе (обрабатывается декоратором)
+
+### Tests
+
+- Добавлен полный набор тестов (81 тест): init, config_flow, coordinator, sensor, button, diagnostics, helpers, decorators
 
 
 ## [2.0.0] - 2025-04-06
