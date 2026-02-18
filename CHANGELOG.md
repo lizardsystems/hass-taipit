@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Добавлена защита от краша в _handle_coordinator_update при недоступности данных
 - Удалён мёртвый код обработки исключений в координаторе (обрабатывается декоратором)
 
+
 ## [2.0.0] - 2025-04-06
 
 ### Added
