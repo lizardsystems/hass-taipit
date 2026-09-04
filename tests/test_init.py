@@ -122,8 +122,8 @@ async def test_stale_device_removed(
     )
 
     # Verify stale device exists
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, "99999")}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "99999"), mock_config_entry.entry_id
     )
     assert stale_device is not None
 
@@ -132,14 +132,14 @@ async def test_stale_device_removed(
     await hass.async_block_till_done()
 
     # Stale device should be removed
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, "99999")}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "99999"), mock_config_entry.entry_id
     )
     assert stale_device is None
 
     # Valid device should still exist
-    valid_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, str(MOCK_METER_ID))}
+    valid_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(MOCK_METER_ID)), mock_config_entry.entry_id
     )
     assert valid_device is not None
 
@@ -159,8 +159,8 @@ async def test_no_stale_devices(
     device_registry = dr.async_get(hass)
 
     # All devices should be present
-    valid_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, str(MOCK_METER_ID))}
+    valid_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(MOCK_METER_ID)), mock_config_entry.entry_id
     )
     assert valid_device is not None
 
@@ -169,8 +169,8 @@ async def test_no_stale_devices(
     await hass.async_block_till_done()
 
     # Device should still exist
-    valid_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, str(MOCK_METER_ID))}
+    valid_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(MOCK_METER_ID)), mock_config_entry.entry_id
     )
     assert valid_device is not None
 
@@ -216,11 +216,11 @@ async def test_stale_device_two_meters_one_removed(
     await hass.async_block_till_done()
 
     device_registry = dr.async_get(hass)
-    assert device_registry.async_get_device(
-        identifiers={(DOMAIN, str(MOCK_METER_ID))}
+    assert device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(MOCK_METER_ID)), mock_config_entry.entry_id
     ) is not None
-    assert device_registry.async_get_device(
-        identifiers={(DOMAIN, str(second_meter_id))}
+    assert device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(second_meter_id)), mock_config_entry.entry_id
     ) is not None
 
     # Now only return the first meter
@@ -234,11 +234,11 @@ async def test_stale_device_two_meters_one_removed(
     await hass.async_block_till_done()
 
     # First meter should still exist
-    assert device_registry.async_get_device(
-        identifiers={(DOMAIN, str(MOCK_METER_ID))}
+    assert device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(MOCK_METER_ID)), mock_config_entry.entry_id
     ) is not None
 
     # Second meter should be removed
-    assert device_registry.async_get_device(
-        identifiers={(DOMAIN, str(second_meter_id))}
+    assert device_registry.async_get_device_by_identifier(
+        (DOMAIN, str(second_meter_id)), mock_config_entry.entry_id
     ) is None

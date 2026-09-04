@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-09-04
+
+### Changed
+
+ - Тесты переведены с устаревшего `device_registry.async_get_device` на `async_get_device_by_identifier`: в Home Assistant 2026.9 этот вызов выбрасывает `RuntimeError`. Код самой интеграции изменений не потребовал, `via_device` в нём не используется, поэтому пользователей проблема не затрагивала.
+ - CI переведён на Python 3.14, так как Home Assistant 2026.7 и новее требует Python 3.14.2. На Python 3.13 тесты запускались против устаревшей версии Home Assistant.
+ - Исправлена зависимость в CI: устанавливался `aiotnse` вместо `aiotaipit`.
+
 ## [3.0.0] - 2026-02-18
 
 ### Added
