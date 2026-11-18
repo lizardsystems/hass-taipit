@@ -1,6 +1,6 @@
 [project]
 name = "hass-taipit"
-version = "3.0.0"
+version = "3.1.0"
 description = "Taipit Cloud Meters custom integration for Home Assistant"
 readme = "README.md"
 license = "MIT"
@@ -37,7 +37,7 @@ test = [
     "pytest",
     "pytest-asyncio",
     "pytest-homeassistant-custom-component",
-    "aiotaipit>=3.0.0",
+    "aiotaipit==3.1.0",
 ]
 
 [tool.setuptools.packages.find]
