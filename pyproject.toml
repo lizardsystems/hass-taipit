@@ -25,12 +25,12 @@ classifiers = [
 ]
 
 [[project.authors]]
-name = "LizardSystems"
+name = "ru-smarthome"
 
 [project.urls]
-Repository = "https://github.com/lizardsystems/hass-taipit"
-Documentation = "https://github.com/lizardsystems/hass-taipit"
-"Bug Tracker" = "https://github.com/lizardsystems/hass-taipit/issues"
+Repository = "https://github.com/ru-smarthome/hass-taipit"
+Documentation = "https://github.com/ru-smarthome/hass-taipit"
+"Bug Tracker" = "https://github.com/ru-smarthome/hass-taipit/issues"
 
 [project.optional-dependencies]
 test = [

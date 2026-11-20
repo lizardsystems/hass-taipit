@@ -8,9 +8,9 @@
 
 # Установка
 
-**Способ 1.** Через [HACS](https://hacs.xyz/) > Интеграции > Добавить пользовательский репозиторий > https://github.com/lizardsystems/hass-taipit/ > **Taipit** > Установить
+**Способ 1.** Через [HACS](https://hacs.xyz/) > Интеграции > Добавить пользовательский репозиторий > https://github.com/ru-smarthome/hass-taipit/ > **Taipit** > Установить
 
-**Способ 2.** Вручную скопируйте папку `taipit` из [latest release](https://github.com/lizardsystems/hass-taipit/releases/latest) в директорию `/config/custom_components`.
+**Способ 2.** Вручную скопируйте папку `taipit` из [latest release](https://github.com/ru-smarthome/hass-taipit/releases/latest) в директорию `/config/custom_components`.
 
 # Настройка
 
@@ -96,7 +96,7 @@ logger:
     aiotaipit: debug
 
 ```
-После возникновения проблемы, пожалуйста, найдите проблему в журнале (/config/home-assistant.log) и создайте [запрос на исправление](https://github.com/lizardsystems/hass-taipit/issues).
+После возникновения проблемы, пожалуйста, найдите проблему в журнале (/config/home-assistant.log) и создайте [запрос на исправление](https://github.com/ru-smarthome/hass-taipit/issues).
 
 # Дополнительная информация
 
